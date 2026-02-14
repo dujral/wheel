@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>High IV Stocks – Tradier</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      transition: all 0.15s;
+    }
+
+    nav a:hover { color: #e2e8f0; border-color: #3b82f6; }
+    nav a.active { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 800px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .info-box strong { color: #e2e8f0; }
+    .info-box a { color: #3b82f6; }
+
+    .api-key-section {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .api-key-section input {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.5rem 0.75rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f8fafc;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .api-key-section input:focus { border-color: #3b82f6; }
+    .api-key-section input::placeholder { color: #475569; }
+
+    .status {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .status.error { color: #f87171; }
+    .status.loading { color: #3b82f6; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid #334155;
+      color: #64748b;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover { color: #94a3b8; }
+
+    td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    tr:hover td { background: rgba(59, 130, 246, 0.05); }
+
+    .ticker { font-weight: 600; color: #f8fafc; }
+    .price { color: #e2e8f0; }
+    .iv-high { color: #4ade80; font-weight: 600; }
+    .iv-med { color: #facc15; font-weight: 600; }
+    .iv-low { color: #94a3b8; font-weight: 600; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .last-updated {
+      font-size: 0.7rem;
+      color: #475569;
+    }
+
+    .progress {
+      height: 3px;
+      background: #334155;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 2px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Calculator</a>
+    <a href="high-iv-yahoo.html">High IV (Yahoo)</a>
+    <a href="high-iv-tradier.html" class="active">High IV (Tradier)</a>
+    <a href="high-iv-polygon.html">High IV (Polygon)</a>
+  </nav>
+
+  <div class="card">
+    <h1>High IV Stocks</h1>
+    <div class="subtitle">Tradier API (Free Sandbox Account)</div>
+
+    <div class="info-box">
+      <strong>Setup (free):</strong>
+      <ol style="margin-top:0.5rem; padding-left:1.25rem;">
+        <li>Go to <a href="https://developer.tradier.com/user/sign_up" target="_blank">developer.tradier.com</a> and create a free account</li>
+        <li>After signing up, go to your Account and find your <strong>Sandbox API Token</strong></li>
+        <li>Paste the token below and click "Fetch IV Data"</li>
+      </ol>
+      <div style="margin-top:0.5rem;">Tradier's sandbox API supports browser requests (CORS), so this should work directly from GitHub Pages.</div>
+    </div>
+
+    <div class="api-key-section">
+      <input type="text" id="apiKey" placeholder="Paste your Tradier sandbox API token here...">
+      <button class="btn" id="fetchBtn" onclick="fetchAll()">Fetch IV Data</button>
+    </div>
+
+    <div class="progress" id="progress" style="display:none">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="controls" style="display:none" id="controlsBar">
+      <button class="btn" onclick="fetchAll()">Refresh</button>
+      <span class="last-updated" id="lastUpdated"></span>
+    </div>
+
+    <div id="tableContainer">
+      <div class="status" id="status">Enter your API token above to get started</div>
+    </div>
+  </div>
+
+  <script>
+    const TICKERS = [
+      'SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA', 'AMD', 'NVDA', 'AMZN',
+      'META', 'GOOGL', 'PLTR', 'SOFI', 'COIN', 'MARA', 'BAC', 'F'
+    ];
+
+    let stockData = [];
+
+    // Save/load API key from localStorage
+    const savedKey = localStorage.getItem('tradier_api_key');
+    if (savedKey) document.getElementById('apiKey').value = savedKey;
+
+    async function fetchQuotes(apiKey) {
+      const symbols = TICKERS.join(',');
+      const resp = await fetch(`https://sandbox.tradier.com/v1/markets/quotes?symbols=${symbols}`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (!resp.ok) {
+        if (resp.status === 401) throw new Error('Invalid API token. Check your Tradier sandbox token.');
+        throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      }
+      const data = await resp.json();
+      return data.quotes.quote;
+    }
+
+    async function fetchOptionsChain(apiKey, ticker) {
+      // First get expiration dates
+      const expResp = await fetch(`https://sandbox.tradier.com/v1/markets/options/expirations?symbol=${ticker}`, {
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' }
+      });
+      if (!expResp.ok) return null;
+      const expData = await expResp.json();
+
+      if (!expData.expirations || !expData.expirations.date || expData.expirations.date.length === 0) return null;
+
+      // Get nearest expiration's options chain
+      const nearestExp = expData.expirations.date[0];
+      const chainResp = await fetch(
+        `https://sandbox.tradier.com/v1/markets/options/chains?symbol=${ticker}&expiration=${nearestExp}&greeks=true`, {
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' }
+      });
+      if (!chainResp.ok) return null;
+      const chainData = await chainResp.json();
+
+      if (!chainData.options || !chainData.options.option) return null;
+
+      // Calculate average IV from the chain
+      let totalIV = 0;
+      let count = 0;
+      for (const opt of chainData.options.option) {
+        if (opt.greeks && opt.greeks.mid_iv && opt.greeks.mid_iv > 0) {
+          totalIV += opt.greeks.mid_iv;
+          count++;
+        }
+      }
+
+      return {
+        avgIV: count > 0 ? totalIV / count : 0,
+        expiration: nearestExp,
+        contracts: chainData.options.option.length
+      };
+    }
+
+    async function fetchAll() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey) {
+        document.getElementById('tableContainer').innerHTML =
+          '<div class="status error">Please enter your Tradier sandbox API token</div>';
+        return;
+      }
+
+      // Save key
+      localStorage.setItem('tradier_api_key', apiKey);
+
+      const btn = document.getElementById('fetchBtn');
+      const container = document.getElementById('tableContainer');
+      const progress = document.getElementById('progress');
+      const progressBar = document.getElementById('progressBar');
+
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+      progress.style.display = 'block';
+      progressBar.style.width = '0%';
+      container.innerHTML = '<div class="status loading">Fetching stock quotes...</div>';
+
+      try {
+        // Step 1: Get all quotes
+        const quotes = await fetchQuotes(apiKey);
+        const quoteMap = {};
+        const quoteArr = Array.isArray(quotes) ? quotes : [quotes];
+        for (const q of quoteArr) {
+          quoteMap[q.symbol] = q;
+        }
+
+        progressBar.style.width = '20%';
+        container.innerHTML = '<div class="status loading">Fetching options chains for IV data...</div>';
+
+        // Step 2: Get options chains for each ticker
+        stockData = [];
+        for (let i = 0; i < TICKERS.length; i++) {
+          const ticker = TICKERS[i];
+          const quote = quoteMap[ticker];
+          const pct = 20 + ((i + 1) / TICKERS.length) * 80;
+          progressBar.style.width = pct + '%';
+          container.innerHTML = `<div class="status loading">Fetching options for ${ticker}... (${i + 1}/${TICKERS.length})</div>`;
+
+          try {
+            const optionsData = await fetchOptionsChain(apiKey, ticker);
+            stockData.push({
+              ticker,
+              name: quote ? quote.description : ticker,
+              price: quote ? quote.last : 0,
+              iv: optionsData ? optionsData.avgIV : 0,
+              expiration: optionsData ? optionsData.expiration : '—',
+              contracts: optionsData ? optionsData.contracts : 0
+            });
+          } catch (e) {
+            console.warn(`Options fetch failed for ${ticker}:`, e);
+            stockData.push({
+              ticker,
+              name: quote ? quote.description : ticker,
+              price: quote ? quote.last : 0,
+              iv: 0,
+              expiration: '—',
+              contracts: 0
+            });
+          }
+        }
+
+        progress.style.display = 'none';
+        document.getElementById('controlsBar').style.display = 'flex';
+        document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+
+        // Sort by IV descending
+        stockData.sort((a, b) => b.iv - a.iv);
+        renderTable();
+
+      } catch (e) {
+        container.innerHTML = `<div class="status error">${e.message}</div>`;
+        progress.style.display = 'none';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Fetch IV Data';
+    }
+
+    function renderTable() {
+      const container = document.getElementById('tableContainer');
+
+      let html = `<table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('ticker')">Ticker</th>
+            <th onclick="sortBy('name')">Name</th>
+            <th onclick="sortBy('price')">Price</th>
+            <th onclick="sortBy('iv')">Avg IV</th>
+            <th onclick="sortBy('expiration')">Nearest Exp</th>
+          </tr>
+        </thead><tbody>`;
+
+      for (const s of stockData) {
+        const ivPct = (s.iv * 100).toFixed(1);
+        const ivClass = s.iv > 0.5 ? 'iv-high' : s.iv > 0.3 ? 'iv-med' : 'iv-low';
+        html += `<tr>
+          <td class="ticker">${s.ticker}</td>
+          <td>${s.name}</td>
+          <td class="price">${s.price ? '$' + s.price.toFixed(2) : '—'}</td>
+          <td class="${ivClass}">${s.iv > 0 ? ivPct + '%' : '—'}</td>
+          <td style="color:#64748b; font-size:0.8rem">${s.expiration}</td>
+        </tr>`;
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    let sortField = 'iv';
+    let sortAsc = false;
+
+    function sortBy(field) {
+      if (sortField === field) {
+        sortAsc = !sortAsc;
+      } else {
+        sortField = field;
+        sortAsc = field === 'ticker' || field === 'name';
+      }
+      stockData.sort((a, b) => {
+        let va = a[field], vb = b[field];
+        if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+      renderTable();
+    }
+  </script>
+</body>
+</html>

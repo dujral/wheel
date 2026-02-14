@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>High IV Stocks – Yahoo Finance</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      transition: all 0.15s;
+    }
+
+    nav a:hover { color: #e2e8f0; border-color: #3b82f6; }
+    nav a.active { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 800px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .info-box strong { color: #e2e8f0; }
+
+    .status {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .status.error { color: #f87171; }
+    .status.loading { color: #3b82f6; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid #334155;
+      color: #64748b;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover { color: #94a3b8; }
+
+    td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    tr:hover td { background: rgba(59, 130, 246, 0.05); }
+
+    .ticker { font-weight: 600; color: #f8fafc; }
+    .price { color: #e2e8f0; }
+    .iv-high { color: #4ade80; font-weight: 600; }
+    .iv-med { color: #facc15; font-weight: 600; }
+    .iv-low { color: #94a3b8; font-weight: 600; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .last-updated {
+      font-size: 0.7rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Calculator</a>
+    <a href="high-iv-yahoo.html" class="active">High IV (Yahoo)</a>
+    <a href="high-iv-tradier.html">High IV (Tradier)</a>
+    <a href="high-iv-polygon.html">High IV (Polygon)</a>
+  </nav>
+
+  <div class="card">
+    <h1>High IV Stocks</h1>
+    <div class="subtitle">Yahoo Finance (Unofficial API – No Key Needed)</div>
+
+    <div class="info-box">
+      <strong>How this works:</strong> This page uses Yahoo Finance's unofficial API to fetch options data
+      for popular wheel strategy stocks. No API key is needed, but since this is an unofficial API,
+      it may be blocked by CORS (browser security) or stop working without notice.
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="fetchBtn" onclick="fetchAll()">Fetch IV Data</button>
+      <span class="last-updated" id="lastUpdated"></span>
+    </div>
+
+    <div id="tableContainer">
+      <div class="status" id="status">Click "Fetch IV Data" to load stock data</div>
+    </div>
+  </div>
+
+  <script>
+    const TICKERS = [
+      'SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA', 'AMD', 'NVDA', 'AMZN',
+      'META', 'GOOGL', 'PLTR', 'SOFI', 'COIN', 'MARA', 'BAC', 'F'
+    ];
+
+    let stockData = [];
+
+    async function fetchOptionData(ticker) {
+      const url = `https://query1.finance.yahoo.com/v7/finance/options/${ticker}`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const quote = data.optionChain.result[0].quote;
+      // Yahoo doesn't always have a direct IV field — we pull from options chain
+      const options = data.optionChain.result[0].options[0];
+      let avgIV = 0;
+      let count = 0;
+      if (options && options.calls) {
+        for (const c of options.calls) {
+          if (c.impliedVolatility) { avgIV += c.impliedVolatility; count++; }
+        }
+      }
+      if (options && options.puts) {
+        for (const p of options.puts) {
+          if (p.impliedVolatility) { avgIV += p.impliedVolatility; count++; }
+        }
+      }
+      avgIV = count > 0 ? avgIV / count : 0;
+
+      return {
+        ticker,
+        price: quote.regularMarketPrice || 0,
+        iv: avgIV,
+        name: quote.shortName || ticker
+      };
+    }
+
+    async function fetchAll() {
+      const btn = document.getElementById('fetchBtn');
+      const statusEl = document.getElementById('status');
+      const container = document.getElementById('tableContainer');
+
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+      container.innerHTML = '<div class="status loading">Fetching data for ' + TICKERS.length + ' tickers... This may take a moment.</div>';
+
+      stockData = [];
+      let errors = 0;
+
+      for (const ticker of TICKERS) {
+        try {
+          const result = await fetchOptionData(ticker);
+          stockData.push(result);
+        } catch (e) {
+          errors++;
+          console.warn(`Failed to fetch ${ticker}:`, e.message);
+          if (errors === 1 && stockData.length === 0) {
+            // First failure with no successes — likely CORS
+            if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+              container.innerHTML = `
+                <div class="status error">
+                  CORS Error: Yahoo Finance blocks direct browser requests.<br><br>
+                  This is a browser security restriction — Yahoo's servers don't allow
+                  requests from other websites. This API would need a backend proxy server
+                  to work.<br><br>
+                  Try the <a href="high-iv-tradier.html" style="color:#3b82f6">Tradier</a> or
+                  <a href="high-iv-polygon.html" style="color:#3b82f6">Polygon.io</a> versions instead.
+                </div>`;
+              btn.disabled = false;
+              btn.textContent = 'Fetch IV Data';
+              return;
+            }
+          }
+        }
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Refresh Data';
+      document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+
+      if (stockData.length === 0) {
+        container.innerHTML = '<div class="status error">Failed to fetch data for all tickers. The API may be unavailable.</div>';
+        return;
+      }
+
+      // Sort by IV descending
+      stockData.sort((a, b) => b.iv - a.iv);
+      renderTable();
+    }
+
+    function renderTable() {
+      const container = document.getElementById('tableContainer');
+
+      let html = `<table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('ticker')">Ticker</th>
+            <th onclick="sortBy('name')">Name</th>
+            <th onclick="sortBy('price')">Price</th>
+            <th onclick="sortBy('iv')">Avg IV</th>
+          </tr>
+        </thead><tbody>`;
+
+      for (const s of stockData) {
+        const ivPct = (s.iv * 100).toFixed(1);
+        const ivClass = s.iv > 0.5 ? 'iv-high' : s.iv > 0.3 ? 'iv-med' : 'iv-low';
+        html += `<tr>
+          <td class="ticker">${s.ticker}</td>
+          <td>${s.name}</td>
+          <td class="price">$${s.price.toFixed(2)}</td>
+          <td class="${ivClass}">${ivPct}%</td>
+        </tr>`;
+      }
+
+      html += '</tbody></table>';
+      if (stockData.length < TICKERS.length) {
+        html += `<div class="last-updated" style="margin-top:0.75rem">Showing ${stockData.length}/${TICKERS.length} tickers (some failed to load)</div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    let sortField = 'iv';
+    let sortAsc = false;
+
+    function sortBy(field) {
+      if (sortField === field) {
+        sortAsc = !sortAsc;
+      } else {
+        sortField = field;
+        sortAsc = field === 'ticker' || field === 'name';
+      }
+      stockData.sort((a, b) => {
+        let va = a[field], vb = b[field];
+        if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+      renderTable();
+    }
+  </script>
+</body>
+</html>

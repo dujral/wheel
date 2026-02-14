@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>High IV Stocks – Polygon.io</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      transition: all 0.15s;
+    }
+
+    nav a:hover { color: #e2e8f0; border-color: #3b82f6; }
+    nav a.active { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 800px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .info-box strong { color: #e2e8f0; }
+    .info-box a { color: #3b82f6; }
+
+    .api-key-section {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .api-key-section input {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.5rem 0.75rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f8fafc;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .api-key-section input:focus { border-color: #3b82f6; }
+    .api-key-section input::placeholder { color: #475569; }
+
+    .status {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .status.error { color: #f87171; }
+    .status.loading { color: #3b82f6; }
+
+    .warning {
+      background: rgba(250, 204, 21, 0.1);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8rem;
+      color: #facc15;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid #334155;
+      color: #64748b;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover { color: #94a3b8; }
+
+    td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    tr:hover td { background: rgba(59, 130, 246, 0.05); }
+
+    .ticker { font-weight: 600; color: #f8fafc; }
+    .price { color: #e2e8f0; }
+    .iv-high { color: #4ade80; font-weight: 600; }
+    .iv-med { color: #facc15; font-weight: 600; }
+    .iv-low { color: #94a3b8; font-weight: 600; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .last-updated {
+      font-size: 0.7rem;
+      color: #475569;
+    }
+
+    .progress {
+      height: 3px;
+      background: #334155;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 2px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Calculator</a>
+    <a href="high-iv-yahoo.html">High IV (Yahoo)</a>
+    <a href="high-iv-tradier.html">High IV (Tradier)</a>
+    <a href="high-iv-polygon.html" class="active">High IV (Polygon)</a>
+  </nav>
+
+  <div class="card">
+    <h1>High IV Stocks</h1>
+    <div class="subtitle">Polygon.io API (Free Tier)</div>
+
+    <div class="info-box">
+      <strong>Setup (free):</strong>
+      <ol style="margin-top:0.5rem; padding-left:1.25rem;">
+        <li>Go to <a href="https://polygon.io/dashboard/signup" target="_blank">polygon.io</a> and create a free account</li>
+        <li>Copy your API key from the dashboard</li>
+        <li>Paste it below and click "Fetch IV Data"</li>
+      </ol>
+      <div style="margin-top:0.5rem;"><strong>Free tier limit:</strong> 5 API calls per minute. This page fetches data slowly to stay within limits.</div>
+    </div>
+
+    <div class="warning">
+      Rate limit: Free tier allows 5 calls/min. Fetching 16 tickers will take ~4 minutes. Be patient!
+    </div>
+
+    <div class="api-key-section">
+      <input type="text" id="apiKey" placeholder="Paste your Polygon.io API key here...">
+      <button class="btn" id="fetchBtn" onclick="fetchAll()">Fetch IV Data</button>
+    </div>
+
+    <div class="progress" id="progress" style="display:none">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="controls" style="display:none" id="controlsBar">
+      <button class="btn" onclick="fetchAll()">Refresh</button>
+      <span class="last-updated" id="lastUpdated"></span>
+    </div>
+
+    <div id="tableContainer">
+      <div class="status" id="status">Enter your API key above to get started</div>
+    </div>
+  </div>
+
+  <script>
+    const TICKERS = [
+      'SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA', 'AMD', 'NVDA', 'AMZN',
+      'META', 'GOOGL', 'PLTR', 'SOFI', 'COIN', 'MARA', 'BAC', 'F'
+    ];
+
+    let stockData = [];
+
+    // Save/load API key from localStorage
+    const savedKey = localStorage.getItem('polygon_api_key');
+    if (savedKey) document.getElementById('apiKey').value = savedKey;
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function fetchTickerSnapshot(apiKey, ticker) {
+      const resp = await fetch(
+        `https://api.polygon.io/v3/snapshot/options/${ticker}?limit=50&apiKey=${apiKey}`
+      );
+      if (resp.status === 429) {
+        throw new Error('RATE_LIMIT');
+      }
+      if (resp.status === 403) {
+        throw new Error('Options snapshots require a paid Polygon.io plan. Falling back to stock data only.');
+      }
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+      return await resp.json();
+    }
+
+    async function fetchStockPrice(apiKey, ticker) {
+      const resp = await fetch(
+        `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${apiKey}`
+      );
+      if (resp.status === 429) {
+        throw new Error('RATE_LIMIT');
+      }
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (data.results && data.results.length > 0) {
+        return data.results[0].c; // closing price
+      }
+      return 0;
+    }
+
+    async function fetchTickerDetails(apiKey, ticker) {
+      const resp = await fetch(
+        `https://api.polygon.io/v3/reference/tickers/${ticker}?apiKey=${apiKey}`
+      );
+      if (resp.status === 429) {
+        throw new Error('RATE_LIMIT');
+      }
+      if (!resp.ok) return { name: ticker };
+      const data = await resp.json();
+      return { name: data.results ? data.results.name : ticker };
+    }
+
+    async function fetchWithRateLimit(fn, retries = 2) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          return await fn();
+        } catch (e) {
+          if (e.message === 'RATE_LIMIT' && attempt < retries) {
+            // Wait 15 seconds for rate limit to reset
+            await sleep(15000);
+            continue;
+          }
+          throw e;
+        }
+      }
+    }
+
+    async function fetchAll() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey) {
+        document.getElementById('tableContainer').innerHTML =
+          '<div class="status error">Please enter your Polygon.io API key</div>';
+        return;
+      }
+
+      // Save key
+      localStorage.setItem('polygon_api_key', apiKey);
+
+      const btn = document.getElementById('fetchBtn');
+      const container = document.getElementById('tableContainer');
+      const progress = document.getElementById('progress');
+      const progressBar = document.getElementById('progressBar');
+
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+      progress.style.display = 'block';
+      progressBar.style.width = '0%';
+
+      stockData = [];
+      let useOptionsSnapshot = true;
+
+      // Try options snapshot for first ticker to see if it's available
+      container.innerHTML = '<div class="status loading">Checking API access level...</div>';
+      try {
+        await fetchWithRateLimit(() => fetchTickerSnapshot(apiKey, TICKERS[0]));
+      } catch (e) {
+        if (e.message.includes('paid') || e.message.includes('403')) {
+          useOptionsSnapshot = false;
+          container.innerHTML = `<div class="status loading">Options snapshots need a paid plan. Fetching stock prices instead (IV won't be available)...</div>`;
+        }
+      }
+
+      // Fetch data for each ticker
+      for (let i = 0; i < TICKERS.length; i++) {
+        const ticker = TICKERS[i];
+        const pct = ((i + 1) / TICKERS.length) * 100;
+        progressBar.style.width = pct + '%';
+        container.innerHTML = `<div class="status loading">Fetching ${ticker}... (${i + 1}/${TICKERS.length})${!useOptionsSnapshot ? '<br><span style="font-size:0.75rem;color:#64748b">Pausing between requests to respect rate limits</span>' : ''}</div>`;
+
+        try {
+          let price = 0;
+          let iv = 0;
+          let name = ticker;
+
+          if (useOptionsSnapshot) {
+            const snapshot = await fetchWithRateLimit(() => fetchTickerSnapshot(apiKey, ticker));
+            if (snapshot.results && snapshot.results.length > 0) {
+              let totalIV = 0;
+              let count = 0;
+              for (const opt of snapshot.results) {
+                if (opt.implied_volatility && opt.implied_volatility > 0) {
+                  totalIV += opt.implied_volatility;
+                  count++;
+                }
+              }
+              iv = count > 0 ? totalIV / count : 0;
+              // Get price from first option's underlying
+              if (snapshot.results[0].details) {
+                price = snapshot.results[0].details.strike_price || 0;
+              }
+            }
+          }
+
+          // Always try to get stock price
+          try {
+            price = await fetchWithRateLimit(() => fetchStockPrice(apiKey, ticker));
+          } catch (e) {
+            console.warn(`Price fetch failed for ${ticker}:`, e.message);
+          }
+
+          // Get company name (batch with price to minimize calls)
+          try {
+            const details = await fetchWithRateLimit(() => fetchTickerDetails(apiKey, ticker));
+            name = details.name;
+          } catch (e) {
+            // Use ticker as name
+          }
+
+          stockData.push({ ticker, name, price, iv });
+
+          // Rate limit: wait between tickers (free tier = 5 calls/min)
+          if (i < TICKERS.length - 1) {
+            await sleep(4000);
+          }
+
+        } catch (e) {
+          console.warn(`Failed for ${ticker}:`, e.message);
+          stockData.push({ ticker, name: ticker, price: 0, iv: 0 });
+          if (e.message === 'RATE_LIMIT') {
+            container.innerHTML = '<div class="status loading">Rate limited — waiting 15 seconds...</div>';
+            await sleep(15000);
+          }
+        }
+      }
+
+      progress.style.display = 'none';
+      document.getElementById('controlsBar').style.display = 'flex';
+      document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+
+      // Sort by IV descending
+      stockData.sort((a, b) => b.iv - a.iv);
+      renderTable(useOptionsSnapshot);
+
+      btn.disabled = false;
+      btn.textContent = 'Fetch IV Data';
+    }
+
+    function renderTable(hasIV = true) {
+      const container = document.getElementById('tableContainer');
+
+      let html = `<table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('ticker')">Ticker</th>
+            <th onclick="sortBy('name')">Name</th>
+            <th onclick="sortBy('price')">Price</th>
+            ${hasIV ? '<th onclick="sortBy(\'iv\')">Avg IV</th>' : ''}
+          </tr>
+        </thead><tbody>`;
+
+      for (const s of stockData) {
+        const ivPct = (s.iv * 100).toFixed(1);
+        const ivClass = s.iv > 0.5 ? 'iv-high' : s.iv > 0.3 ? 'iv-med' : 'iv-low';
+        html += `<tr>
+          <td class="ticker">${s.ticker}</td>
+          <td>${s.name}</td>
+          <td class="price">${s.price ? '$' + s.price.toFixed(2) : '—'}</td>
+          ${hasIV ? `<td class="${ivClass}">${s.iv > 0 ? ivPct + '%' : '—'}</td>` : ''}
+        </tr>`;
+      }
+
+      html += '</tbody></table>';
+
+      if (!hasIV) {
+        html += `<div style="margin-top:1rem; padding:0.75rem; background:rgba(250,204,21,0.1); border:1px solid rgba(250,204,21,0.3); border-radius:8px; font-size:0.8rem; color:#facc15;">
+          IV data requires a paid Polygon.io plan. Showing stock prices only.
+          Try <a href="high-iv-tradier.html" style="color:#3b82f6">Tradier</a> for free IV data.
+        </div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    let sortField = 'iv';
+    let sortAsc = false;
+
+    function sortBy(field) {
+      if (sortField === field) {
+        sortAsc = !sortAsc;
+      } else {
+        sortField = field;
+        sortAsc = field === 'ticker' || field === 'name';
+      }
+      stockData.sort((a, b) => {
+        let va = a[field], vb = b[field];
+        if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+      renderTable();
+    }
+  </script>
+</body>
+</html>
